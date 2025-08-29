@@ -1,0 +1,14 @@
+﻿/* Tailwind v4 uses a single import */
+@import "tailwindcss";
+
+/* Theme tokens (replaces tailwind.config.js extend) */
+@theme {
+  --color-brand-50:  #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+}
+
+/* Optional small tweak */
+:root { color-scheme: light; }

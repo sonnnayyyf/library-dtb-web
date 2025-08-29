@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { getPool } from '../db/mysql.js';
+const router=Router();
+const sign=u=>jwt.sign({id:u.id,role:u.role,name:u.name,email:u.email},process.env.JWT_SECRET,{expiresIn:'7d'});
+router.post('/signup',async(req,res)=>{const{ name,email,password}=req.body||{};if(!name||!email||!password)return res.status(400).json({error:'name, email, password required'});const pool=await getPool();const[ex]=await pool.query('SELECT id FROM users WHERE email=?',[email]);if(ex.length)return res.status(409).json({error:'Email already registered'});const hash=await bcrypt.hash(password,10);const[r]=await pool.query('INSERT INTO users(role,name,email,password_hash) VALUES (?,?,?,?)',['reader',name,email,hash]);const[u]=await pool.query('SELECT id,role,name,email FROM users WHERE id=?',[r.insertId]);const user=u[0];res.json({token:sign(user),user});});
+router.post('/login',async(req,res)=>{const{ email,password}=req.body||{};const pool=await getPool();const[r]=await pool.query('SELECT id,role,name,email,password_hash FROM users WHERE email=?',[email]);if(!r.length)return res.status(401).json({error:'Invalid credentials'});const u=r[0];const ok=u.password_hash&&await bcrypt.compare(password,u.password_hash);if(!ok)return res.status(401).json({error:'Invalid credentials'});res.json({token:sign(u),user:{id:u.id,role:u.role,name:u.name,email:u.email}});});
+router.get('/me',async(req,res)=>{const h=req.headers.authorization||'';const t=h.startsWith('Bearer ')?h.slice(7):null;if(!t)return res.json({user:null});try{res.json({user:jwt.verify(t,process.env.JWT_SECRET)});}catch{res.json({user:null});}});
+export default router;

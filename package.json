@@ -1,0 +1,14 @@
+{
+  "name": "smart-library",
+  "private": true,
+  "scripts": {
+    "db:apply": "node backend/db/run-sql.cjs",
+    "db:reset": "node backend/db/run-sql.cjs --reset",
+    "mongo:init": "node mongo/run-mongo.cjs",
+    "dev:api": "npm --prefix backend run dev",
+    "dev:web": "npm --prefix frontend run dev"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1"
+  }
+}
