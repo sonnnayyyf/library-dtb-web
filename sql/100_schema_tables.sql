@@ -1,4 +1,3 @@
--- 100_schema_tables.sql  (minimal books shape)
 
 -- USERS
 CREATE TABLE IF NOT EXISTS users (
@@ -18,7 +17,6 @@ CREATE TABLE IF NOT EXISTS books (
   publisher VARCHAR(255) NULL,
   copies INT NOT NULL DEFAULT 0 CHECK (copies >= 0),
   available_copies INT NOT NULL DEFAULT 0 CHECK (available_copies >= 0),
-  image_url TEXT NULL,
   is_retired TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_books_title (title),
@@ -27,12 +25,31 @@ CREATE TABLE IF NOT EXISTS books (
   INDEX idx_books_retired (is_retired)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- AUTHORS (distinct names)
+CREATE TABLE IF NOT EXISTS authors (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(190) NOT NULL,
+  UNIQUE KEY uniq_author_name (name),
+  INDEX idx_authors_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- M2M: book_authors
+CREATE TABLE IF NOT EXISTS book_authors (
+  book_id INT NOT NULL,
+  author_id INT NOT NULL,
+  PRIMARY KEY (book_id, author_id),
+  CONSTRAINT fk_ba_book  FOREIGN KEY (book_id)  REFERENCES books(id)   ON DELETE CASCADE,
+  CONSTRAINT fk_ba_auth  FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE CASCADE,
+  INDEX idx_ba_author (author_id),
+  INDEX idx_ba_book (book_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- CHECKOUTS
 CREATE TABLE IF NOT EXISTS checkouts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   book_id INT NOT NULL,
   user_id INT NOT NULL,
-  checkout_date DATETIME NOT NULL,
+  checkout_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   due_date DATETIME NOT NULL,
   return_date DATETIME NULL,
   status ENUM('borrowed','returned','lost') NOT NULL DEFAULT 'borrowed',
@@ -59,7 +76,7 @@ CREATE TABLE IF NOT EXISTS reviews (
   INDEX idx_reviews_book (book_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- STAFF LOGS (for inventory adjustments)
+-- STAFF LOGS (inventory adjustments etc.)
 CREATE TABLE IF NOT EXISTS staff_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   staff_id INT NULL,

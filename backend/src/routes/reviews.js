@@ -20,7 +20,7 @@ async function tryCalls(pool, attempts) {
 }
 
 /** Create/replace a review — OUT vars: @success, @message */
-router.post('/', requireAuth, async (req, res, next) => {
+router.post('/', requireAuth(), async (req, res, next) => {
   try {
     const { book_id, rating, comment } = req.body;
     if (!book_id || rating == null) return res.status(400).json({ error: 'book_id and rating required' });

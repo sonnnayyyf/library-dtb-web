@@ -42,8 +42,12 @@ const filesInOrder = [
   '404_sp_add_book.sql',
   '405_sp_update_inventory.sql',
   '406_sp_retire_book.sql',
+  '407_sp_unretire_book.sql',
+  '701_rpt_most_borrowed_books.sql',
+  '702_rpt_top_readers.sql',
+  '703_rpt_low_availability.sql',
+  '900_seed_sample.sql',
   '500_triggers.sql',
-  // '900_seed_sample.sql',
 ];
 
 function safeTransform(sql) {

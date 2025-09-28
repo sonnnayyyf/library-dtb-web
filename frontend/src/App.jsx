@@ -6,6 +6,7 @@ import Signup from './pages/Signup.jsx';
 import Books from './pages/Books.jsx';
 import AdminBooks from './pages/AdminBooks.jsx';
 import MyLoans from './pages/MyLoans.jsx';
+import AdminReports from './pages/AdminReports.jsx';
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -26,6 +27,9 @@ function Navbar() {
             {user && <NavLink to="/loans" className={link}>My Loans</NavLink>}
             {user?.role !== 'reader' && user && (
               <NavLink to="/admin/books" className={link}>Admin</NavLink>
+            )}
+            {user?.role !== 'reader' && user && (
+              <NavLink to="/admin/reports" className={link}>Reports</NavLink>
             )}
           </nav>
 
@@ -73,6 +77,7 @@ export default function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/loans" element={<RequireAuth><MyLoans /></RequireAuth>} />
           <Route path="/admin/books" element={<RequireAuth role={['staff','admin']}><AdminBooks /></RequireAuth>} />
+          <Route path="/admin/reports" element={<RequireAuth role={['staff','admin']}><AdminReports/></RequireAuth>} />
         </Routes>
       </main>
       <footer className="text-center text-xs text-gray-400 py-6">

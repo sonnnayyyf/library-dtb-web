@@ -31,7 +31,7 @@ async function tryCalls(pool, attempts) {
 }
 
 /** My loans (reader) */
-router.get('/my', requireAuth, async (req, res, next) => {
+router.get('/my', requireAuth(), async (req, res, next) => {
   try {
     const pool = await getPool();
     const [rows] = await pool.query(
@@ -50,7 +50,7 @@ router.get('/my', requireAuth, async (req, res, next) => {
 });
 
 /** Borrow a book (reader) — OUT vars: @checkout_id, @success, @message */
-router.post('/borrow', requireAuth, async (req, res, next) => {
+router.post('/borrow', requireAuth(), async (req, res, next) => {
   try {
     const { book_id } = req.body;
     if (!book_id) return res.status(400).json({ error: 'book_id required' });
@@ -68,7 +68,7 @@ router.post('/borrow', requireAuth, async (req, res, next) => {
 });
 
 /** Return a book (reader) — OUT vars: @success, @message */
-router.post('/return', requireAuth, async (req, res, next) => {
+router.post('/return', requireAuth(), async (req, res, next) => {
   try {
     const { checkout_id } = req.body;
     if (!checkout_id) return res.status(400).json({ error: 'checkout_id required' });

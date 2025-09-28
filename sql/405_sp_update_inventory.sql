@@ -1,15 +1,40 @@
+-- 405_sp_update_inventory.sql
+DROP PROCEDURE IF EXISTS sp_update_inventory; /*<SPLIT>*/
 DELIMITER $$
-DROP PROCEDURE IF EXISTS sp_update_inventory $$
-CREATE PROCEDURE sp_update_inventory(IN p_staff_id BIGINT UNSIGNED, IN p_book_id BIGINT UNSIGNED, IN p_delta INT, IN p_reason VARCHAR(255))
+
+CREATE PROCEDURE sp_update_inventory(
+  IN p_book_id  INT,            -- FIRST: book id
+  IN p_delta    INT,            -- SECOND: +N / -N
+  IN p_reason   VARCHAR(255),   -- THIRD: reason text
+  IN p_staff_id INT             -- FOURTH: staff/admin user id (nullable)
+)
 BEGIN
-  DECLARE v_new_total INT; DECLARE v_new_avail INT;
-  START TRANSACTION;
-  SELECT total_copies + p_delta, available_copies + p_delta INTO v_new_total, v_new_avail
-  FROM books WHERE id=p_book_id FOR UPDATE;
-  IF v_new_total < 0 OR v_new_avail < 0 THEN ROLLBACK; SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Inventory cannot be negative'; END IF;
-  UPDATE books SET total_copies=v_new_total, available_copies=v_new_avail WHERE id=p_book_id;
-  INSERT INTO staff_logs(staff_id, action, book_id, payload)
-  VALUES (p_staff_id, 'UPDATE_INVENTORY', p_book_id, JSON_OBJECT('delta', p_delta, 'reason', p_reason));
-  COMMIT;
+  DECLARE v_copies INT;
+  DECLARE v_avail  INT;
+
+  -- Lock the book row
+  SELECT copies, available_copies
+    INTO v_copies, v_avail
+  FROM books
+  WHERE id = p_book_id
+  FOR UPDATE;
+
+  IF v_copies IS NULL THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Book not found';
+  END IF;
+
+  -- Adjust totals; keep within bounds
+  SET v_copies = GREATEST(0, v_copies + p_delta);
+  SET v_avail  = LEAST(v_copies, GREATEST(0, v_avail + p_delta));
+
+  UPDATE books
+     SET copies = v_copies,
+         available_copies = v_avail
+   WHERE id = p_book_id;
+
+  -- Optional audit log
+  INSERT INTO staff_logs(staff_id, book_id, action, delta, reason, created_at)
+  VALUES (p_staff_id, p_book_id, 'inventory_adjust', p_delta, p_reason, NOW());
 END $$
+
 DELIMITER ;
